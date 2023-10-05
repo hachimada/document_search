@@ -1,4 +1,4 @@
-from .chat import Message, MessageList, ChatResponse
+from .chat import Message, UserMessage, AssistantMessage, SystemMessage, MessageList, ChatResponse
 from dotenv import load_dotenv
 import openai
 import os
@@ -9,25 +9,23 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 openai.api_key = OPENAI_API_KEY
 
+DEFAULT_BEHAVIOR = "You are useful assistant and response in English."
+
 
 class ChatClient:
 
-    def __init__(self, behavior=None, model: str = "gpt-4") -> None:
-        if behavior is None:
-            behavior = {"role": "system",
-                        "content": "You are useful assistant and response in English."}
+    def __init__(self, model: str = "gpt-3.5-turbo", behavior: str = None) -> None:
         self.model: str = model
-        self.behavior: Message = Message(behavior)
-        self.messages: MessageList = MessageList([self.behavior])
+        self.messages: MessageList = MessageList([])
+        if behavior is None:
+            self.set_behavior(DEFAULT_BEHAVIOR)
 
     def set_behavior(self, behavior: str) -> 'ChatClient':
-        self.behavior = Message({"role": "system", "content": behavior})
+        self.messages.set(0, SystemMessage(behavior))
         return self
 
     def add_user_message(self, content: str) -> 'ChatClient':
-        self.messages.append(
-            Message({"role": "user", "content": content})
-        )
+        self.messages.append(UserMessage(content))
         return self
 
     def add_message(self, message: Message) -> 'ChatClient':
@@ -37,9 +35,32 @@ class ChatClient:
     def latest_message(self) -> Message:
         return self.messages.get_latest()
 
-    def request(self) -> ChatResponse:
-        res = openai.ChatCompletion.create(
-            model=self.model,
-            messages=self.messages.to_dict()
+    def simple_request(self) -> ChatResponse:
+        """Send a stateless request.
+        Not holding a response, it cannot be used for conversation.
+        :return: Response
+        """
+        response: ChatResponse = ChatResponse(
+            openai.ChatCompletion.create(
+                model=self.model,
+                messages=self.messages.to_dict()
+            )
         )
-        return ChatResponse(res['choices'][0]['message'], res['usage'])
+        self.messages.clear()
+        self.set_behavior(DEFAULT_BEHAVIOR)
+        return response
+
+    def conversational_request(self) -> ChatResponse:
+        """Send a statefull request.
+        Holding a response, it can be used for conversation.
+        :return: Response
+        """
+        # TODO Need to implement a mechanism to delete old messages when usage approaches the limit
+        response: ChatResponse = ChatResponse(
+            openai.ChatCompletion.create(
+                model=self.model,
+                messages=self.messages.to_dict()
+            )
+        )
+        self.add_message(response.get_message())
+        return response

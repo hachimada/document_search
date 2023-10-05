@@ -5,9 +5,8 @@ class Message:
     def __init__(self, message: dict[str, str]) -> None:
         """Messages that make up a conversation
 
-        example: Message("user", "Hello!")
-
-        :param message {"role": "user", "content": "Hello!"}
+        :param message: {"role": "user", "content": "Hello!"}.
+        role must be one of "user", "system" or "assistant".
         """
         self.role: str = message["role"]
         self.content: str = message["content"]
@@ -31,11 +30,29 @@ class Message:
         }
 
 
+class UserMessage(Message):
+
+    def __init__(self, content: str):
+        super().__init__({"role": "user", "content": content})
+
+
+class AssistantMessage(Message):
+
+    def __init__(self, content: str):
+        super().__init__({"role": "assistant", "content": content})
+
+
+class SystemMessage(Message):
+
+    def __init__(self, content: str):
+        super().__init__({"role": "system", "content": content})
+
+
 class MessageList:
     def __init__(self, messages: list[Message]) -> None:
-        """A list of messages that make up a conversation
+        """A list of Message.
 
-        :param messages: A list of messages
+        :param messages: A list of Message.
         """
         self.messages: list[Message] = messages
 
@@ -50,6 +67,23 @@ class MessageList:
         """Get the latest message"""
         return self.messages[-1]
 
+    def clear(self) -> None:
+        self.messages.clear()
+
+    def set(self, index: int, message: Message) -> None:
+        """Inserts a Message at the specified index.
+
+        :param index: index at which the Message is inserted
+        :param message: Message to be inserted
+        """
+        if self.is_empty():
+            self.messages.append(message)
+        else:
+            self.messages[index] = message
+
+    def is_empty(self):
+        return len(self.messages) == 0
+
     def to_dict(self) -> list[dict[str, str]]:
         """Converts the message list to a dictionary
 
@@ -60,9 +94,13 @@ class MessageList:
 
 class ChatResponse:
 
-    def __init__(self, message: dict, usage: dict):
-        self.message: Message = Message(message)
-        self.usage: Usage = Usage(usage)
+    def __init__(self, response: any) -> None:
+        """Convert openai api response to ChatResponse object
+
+        :parameter response: openai api response
+        """
+        self.message: Message = Message(response['choices'][0]['message'])
+        self.usage: Usage = Usage(response['usage'])
 
     def get_message(self) -> Message:
         return self.message
@@ -72,28 +110,3 @@ class ChatResponse:
 
     def get_usage(self) -> Usage:
         return self.usage
-
-
-if __name__ == '__main__':
-    json_str = """
-    {
-      "id": "some-id",
-      "object": "chat.completion",
-      "created": 1234567890,
-      "model": "gpt-3.5-turbo-0613",
-      "choices": [
-        {
-          "index": 0,
-          "message": {
-            "role": "assistant",
-            "content": "Hi there!"
-          },
-          "finish_reason": "stop"
-        }
-      ],
-      "usage": {
-        "prompt_tokens": 10,
-        "completion_tokens": 11,
-        "total_tokens": 21
-      }
-    }"""
