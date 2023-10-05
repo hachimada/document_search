@@ -1,9 +1,12 @@
-from openai_module.client import ChatClient
+from openai_module.client import ChatClient, EmbeddingClient
 from openai_module.chat import ChatResponse
+from openai_module.embedding import EmbeddingResponse
 
 if __name__ == '__main__':
 
     client: ChatClient = ChatClient()
+
+    embeddingClient: EmbeddingClient = EmbeddingClient()
 
     while True:
         # 入力を受け付ける
@@ -14,3 +17,7 @@ if __name__ == '__main__':
         response: ChatResponse = client.add_user_message(input_text).simple_request()
         # response: ChatResponse = client.add_user_message(input_text).conversational_request()
         print(response.get_message().get_content() + f"  (total token usage: {response.usage.get_total_tokens()}）")
+
+        embedding_response: EmbeddingResponse = embeddingClient.request(input_text)
+        print(f"(embedding total token usage: {embedding_response.get_usage().get_total_tokens()}）")
+        print("embedding = ", embedding_response.get_embedding())

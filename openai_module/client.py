@@ -1,4 +1,5 @@
-from .chat import Message, UserMessage, AssistantMessage, SystemMessage, MessageList, ChatResponse
+from .chat import Message, UserMessage, SystemMessage, MessageList, ChatResponse
+from .embedding import EmbeddingResponse
 from dotenv import load_dotenv
 import openai
 import os
@@ -64,3 +65,13 @@ class ChatClient:
         )
         self.add_message(response.get_message())
         return response
+
+
+class EmbeddingClient:
+    def __init__(self, model: str = "text-embedding-ada-002") -> None:
+        self.model: str = model
+
+    def request(self, text: str) -> EmbeddingResponse:
+        return EmbeddingResponse(
+            openai.Embedding.create(input=[text], model=self.model)
+        )
