@@ -92,6 +92,17 @@ class MessageList:
         return [message.to_dict() for message in self.messages]
 
 
+class ChatUsage(Usage):
+
+    def __init__(self, usage: dict[str, int]):
+        super().__init__(usage)
+        self.completion_tokens: int = usage["completion_tokens"]
+
+    def get_completion_tokens(self):
+        """Get the number of tokens used for the completion"""
+        return self.completion_tokens
+
+
 class ChatResponse:
 
     def __init__(self, response: any) -> None:
@@ -100,7 +111,7 @@ class ChatResponse:
         :parameter response: openai api response
         """
         self.message: Message = Message(response['choices'][0]['message'])
-        self.usage: Usage = Usage(response['usage'])
+        self.usage: ChatUsage = ChatUsage(response['usage'])
 
     def get_message(self) -> Message:
         return self.message
@@ -108,5 +119,5 @@ class ChatResponse:
     def get_role(self) -> str:
         return self.message.get_role()
 
-    def get_usage(self) -> Usage:
+    def get_usage(self) -> ChatUsage:
         return self.usage

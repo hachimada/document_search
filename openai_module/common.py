@@ -5,16 +5,11 @@ class Usage:
         :param usage: {"prompt_tokens": 12, "completion_tokens": 23, "total_tokens": 35}
         """
         self.prompt_tokens: int = usage["prompt_tokens"]
-        self.completion_tokens: int = usage["completion_tokens"]
         self.total_tokens = usage["total_tokens"]
 
     def get_prompt_tokens(self):
         """Get the number of tokens used for the prompt"""
         return self.prompt_tokens
-
-    def get_completion_tokens(self):
-        """Get the number of tokens used for the completion"""
-        return self.completion_tokens
 
     def get_total_tokens(self):
         """Get the total number of tokens used"""
